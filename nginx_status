@@ -7,7 +7,7 @@ class MuninNginxStatus
   end
 
   GRAPH_DATA = {
-    all: Graph.new(
+    default: Graph.new(
       config_graph: [
         ["graph_title"    , "Nginx Status"          ] ,
         ["graph_category" , "nginx"                 ] ,
@@ -15,12 +15,9 @@ class MuninNginxStatus
       ] ,
       item_list: [
         :active_connections   ,
+        :waiting              ,
         :accepted_connections ,
-        :handled_connections  ,
-        :handled_requests     ,
-        :reading              ,
-        :writing              ,
-        :waiting              #
+        :handled_requests     #
       ] #
     ) ,
     request: Graph.new(
@@ -45,10 +42,26 @@ class MuninNginxStatus
         :writing              ,
         :waiting              #
       ] #
+    ) ,
+    all: Graph.new(
+      config_graph: [
+        ["graph_title"    , "Nginx Status"          ] ,
+        ["graph_category" , "nginx"                 ] ,
+        ["graph_vlabel"   , "Connections, Requests" ] #
+      ] ,
+      item_list: [
+        :active_connections   ,
+        :reading              ,
+        :writing              ,
+        :waiting              ,
+        :accepted_connections ,
+        :handled_connections  ,
+        :handled_requests     #
+      ] #
     ) #
   }
 
-  DEFAULT_GRAPH_TYPE = :all
+  DEFAULT_GRAPH_TYPE = :default
 
   DEFAULT_NGINX_STATUS_URL = "http://localhost/nginx_status"
 
@@ -63,7 +76,7 @@ class MuninNginxStatus
       Item.new( name: :handled_requests     , re_index: 4 , label: "Requests/sec"             , type: "DERIVE" , info: "Number of handled requests." ) ,
       Item.new( name: :reading              , re_index: 5 , label: "Reading connections"      , type: "GAUGE"  , info: "nginx reads request header" ) ,
       Item.new( name: :writing              , re_index: 6 , label: "Writing connections"      , type: "GAUGE"  , info: "nginx reads request body, processes request, or writes response to a client" ) ,
-      Item.new( name: :waiting              , re_index: 7 , label: "Waiting connections"      , type: "GAUGE"  , info: "keep-alive connections, actually it is active - (reading + writing)") ###
+      Item.new( name: :waiting              , re_index: 7 , label: "Keep-Alive connections"   , type: "GAUGE"  , info: "keep-alive connections, actually it is active - (reading + writing)") ###
     ]
 
     PARSE_RE = %r{Active connections: (\d+) .*? (\d+) (\d+) (\d+) .*?Reading: (\d+) Writing: (\d+) Waiting: (\d+)}i

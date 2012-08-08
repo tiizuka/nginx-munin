@@ -1,0 +1,149 @@
+#!/usr/bin/env ruby
+require 'open-uri'
+require 'ostruct'
+
+class MuninNginxStatus
+  class Graph < OpenStruct
+  end
+
+  GRAPH_DATA = {
+    all: Graph.new(
+      config_graph: [
+        ["graph_title"    , "Nginx Status"          ] ,
+        ["graph_category" , "nginx"                 ] ,
+        ["graph_vlabel"   , "Connections, Requests" ] #
+      ] ,
+      item_list: [
+        :active_connections   ,
+        :accepted_connections ,
+        :handled_connections  ,
+        :handled_requests     ,
+        :reading              ,
+        :writing              ,
+        :waiting              #
+      ] #
+    ) ,
+    request: Graph.new(
+      config_graph: [
+        ["graph_title"    , "Nginx Number of Requests"] ,
+        ["graph_category" , "nginx"                   ] ,
+        ["graph_vlabel"   , "Requests / sec"          ] #
+      ] ,
+      item_list: [
+        :handled_requests     #
+      ] #
+    ) ,
+    connection: Graph.new(
+      config_graph: [
+        ["graph_title"    , "Nginx Number of Connections"] ,
+        ["graph_category" , "nginx"                      ] ,
+        ["graph_vlabel"   , "Connections"                ] #
+      ] ,
+      item_list: [
+        :active_connections   ,
+        :reading              ,
+        :writing              ,
+        :waiting              #
+      ] #
+    ) #
+  }
+
+  DEFAULT_GRAPH_TYPE = :all
+
+  DEFAULT_NGINX_STATUS_URL = "http://localhost/nginx_status"
+
+  module NginxStatus
+    class Item < OpenStruct
+    end
+
+    ITEM_LIST_ALL = [
+      Item.new( name: :active_connections   , re_index: 1 , label: "Active connections"       , type: "GAUGE"  , info: "Number of all open connections." ) ,
+      Item.new( name: :accepted_connections , re_index: 2 , label: "Accepted connections/sec" , type: "DERIVE" , info: "Number of accepted connections." ) ,
+      Item.new( name: :handled_connections  , re_index: 3 , label: "Handled connections/sec"  , type: "DERIVE" , info: "Number of handled connections (no one was closed just it was accepted)." ) ,
+      Item.new( name: :handled_requests     , re_index: 4 , label: "Requests/sec"             , type: "DERIVE" , info: "Number of handled requests." ) ,
+      Item.new( name: :reading              , re_index: 5 , label: "Reading connections"      , type: "GAUGE"  , info: "nginx reads request header" ) ,
+      Item.new( name: :writing              , re_index: 6 , label: "Writing connections"      , type: "GAUGE"  , info: "nginx reads request body, processes request, or writes response to a client" ) ,
+      Item.new( name: :waiting              , re_index: 7 , label: "Waiting connections"      , type: "GAUGE"  , info: "keep-alive connections, actually it is active - (reading + writing)") ###
+    ]
+
+    PARSE_RE = %r{Active connections: (\d+) .*? (\d+) (\d+) (\d+) .*?Reading: (\d+) Writing: (\d+) Waiting: (\d+)}i
+
+    # http://wiki.nginx.org/HttpStubStatusModule
+    #   The stub status module reports status similar to mathopd's status page. It is plain text information like
+    #     | Active connections: 291
+    #     | server accepts handled requests
+    #     |   16630948 16630948 31070465
+    #     | Reading: 6 Writing: 179 Waiting: 106
+    #   active connections -- number of all open connections
+    #   server accepts handled requests -- nginx accepted 16630948 connections, handled 16630948 connections (no one was closed just it was accepted), and handles 31070465 requests (1.8 requests per connection)
+    #   reading -- nginx reads request header
+    #   writing -- nginx reads request body, processes request, or writes response to a client
+    #   waiting -- keep-alive connections, actually it is active - (reading + writing)
+
+    def self.parse_page(page)
+      m = PARSE_RE.match((page||"").gsub(/\s+/," "))
+      if m
+        ret = {}
+        ITEM_LIST_ALL.each { |i|
+          ret[i.name] = m[i.re_index]
+        }
+        ret
+      else
+        nil
+      end
+    end
+  end
+
+  def initialize(h)
+    @env      = h[:env]
+    @arg      = h[:arg]
+    @filename = h[:filename]
+    @graph_data = (x=@filename.split(/_/).last.to_sym; GRAPH_DATA[x] || GRAPH_DATA[DEFAULT_GRAPH_TYPE])
+    @nginx_status_url = @env["nginx_status_url"] || DEFAULT_NGINX_STATUS_URL
+  end
+
+  def retrieve_page
+    open(@nginx_status_url){|f| f.read } rescue nil
+  end
+
+  def exec
+    status = NginxStatus.parse_page(retrieve_page())
+    case @arg
+    when "autoconf"
+      if status
+        puts "yes"
+      else
+        puts "no"
+      end
+    when "config"
+      @graph_data.config_graph.each { |x|
+        puts x.join(" ")
+      }
+      puts_list(type: :label)
+      puts_list(type: :info )
+      puts_list(type: :type )
+    else
+      puts_list(type: :value, status: status)
+    end
+  end
+
+  def puts_list(h)
+    @graph_data.item_list.each { |n|
+      item = NginxStatus::ITEM_LIST_ALL.detect{|i| i.name == n }
+      case h[:type]
+      when :label
+        puts [item.name, ".label", " ", item.label].join
+      when :info
+        puts [item.name, ".info" , " ", item.info ].join
+      when :type
+        puts [item.name, ".type" , " ", item.type ].join
+      when :value
+        puts [item.name, ".value", " ", h[:status][item.name]].join
+      end
+    }
+  end
+end
+
+if __FILE__ == $0
+  MuninNginxStatus.new(arg: ARGV[0], env: ENV, filename: $0).exec
+end

@@ -1,7 +1,11 @@
 nginx-munin
 ===========
 
-Munin plugin for Nginx
+Munin plugin for Nginx.
+
+With simple and straight specifications.
+I am not interested in instantaneous Requests/sec value measured by only 1 sec,
+but I am interested in average Requests/sec value from whole measuring period.
 
 #### Graph Fields
 
@@ -13,7 +17,7 @@ Munin plugin for Nginx
 * Writing connections
 * Keep-Alive connections
 
-#### Graph Type
+#### Graph Types
 
 1. `default`
   * Only Requests/sec, Accepted connections/sec, Active connections and Keep-Alive connections values in one graph

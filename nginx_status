@@ -1,59 +1,59 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env ruby1.8
 require 'open-uri'
 require 'ostruct'
 
 class MuninNginxStatus
-  class Graph < OpenStruct
+    class Graph < OpenStruct
   end
 
   GRAPH_DATA = {
-    default: Graph.new(
-      config_graph: [
+    :default => Graph.new(
+      :config_graph => [
         ["graph_title"    , "Nginx Status"          ] ,
         ["graph_category" , "nginx"                 ] ,
         ["graph_args"     , "--base 1000 -l 0"      ] ,
         ["graph_vlabel"   , "Connections, Requests" ] #
       ] ,
-      item_list: [
+      :item_list => [
         :active_connections   ,
         :waiting              ,
         :accepted_connections ,
         :handled_requests     #
       ] #
     ) ,
-    request: Graph.new(
-      config_graph: [
+    :request => Graph.new(
+      :config_graph => [
         ["graph_title"    , "Nginx Number of Requests"] ,
         ["graph_category" , "nginx"                   ] ,
         ["graph_args"     , "--base 1000 -l 0"        ] ,
         ["graph_vlabel"   , "Requests / sec"          ] #
       ] ,
-      item_list: [
+      :item_list => [
         :handled_requests     #
       ] #
     ) ,
-    connection: Graph.new(
-      config_graph: [
+    :connection => Graph.new(
+      :config_graph => [
         ["graph_title"    , "Nginx Number of Connections"] ,
         ["graph_category" , "nginx"                      ] ,
         ["graph_args"     , "--base 1000 -l 0"           ] ,
         ["graph_vlabel"   , "Connections"                ] #
       ] ,
-      item_list: [
+      :item_list => [
         :active_connections   ,
         :reading              ,
         :writing              ,
         :waiting              #
       ] #
     ) ,
-    all: Graph.new(
-      config_graph: [
+    :all => Graph.new(
+      :config_graph => [
         ["graph_title"    , "Nginx Status"          ] ,
         ["graph_category" , "nginx"                 ] ,
         ["graph_args"     , "--base 1000 -l 0"      ] ,
         ["graph_vlabel"   , "Connections, Requests" ] #
       ] ,
-      item_list: [
+      :item_list => [
         :active_connections   ,
         :reading              ,
         :writing              ,
@@ -74,13 +74,13 @@ class MuninNginxStatus
     end
 
     ITEM_LIST_ALL = [
-      Item.new( name: :active_connections   , re_index: 1 , label: "Active connections"       , type: "GAUGE"             , info: "Number of all open connections." ) ,
-      Item.new( name: :accepted_connections , re_index: 2 , label: "Accepted connections/sec" , type: "DERIVE" , min: 0   , info: "Number of accepted connections." ) ,
-      Item.new( name: :handled_connections  , re_index: 3 , label: "Handled connections/sec"  , type: "DERIVE" , min: 0   , info: "Number of handled connections (no one was closed just it was accepted)." ) ,
-      Item.new( name: :handled_requests     , re_index: 4 , label: "Requests/sec"             , type: "DERIVE" , min: 0   , info: "Number of handled requests." ) ,
-      Item.new( name: :reading              , re_index: 5 , label: "Reading connections"      , type: "GAUGE"             , info: "nginx reads request header" ) ,
-      Item.new( name: :writing              , re_index: 6 , label: "Writing connections"      , type: "GAUGE"             , info: "nginx reads request body, processes request, or writes response to a client" ) ,
-      Item.new( name: :waiting              , re_index: 7 , label: "Keep-Alive connections"   , type: "GAUGE"             , info: "keep-alive connections, actually it is active - (reading + writing)") ###
+      Item.new( :name => :active_connections   , :re_index => 1 , :label => "Active connections"       , :type => "GAUGE"             , :info => "Number of all open connections." ) ,
+      Item.new( :name => :accepted_connections , :re_index => 2 , :label => "Accepted connections/sec" , :type => "DERIVE" , :min => 0   , :info => "Number of accepted connections." ) ,
+      Item.new( :name => :handled_connections  , :re_index => 3 , :label => "Handled connections/sec"  , :type => "DERIVE" , :min => 0   , :info => "Number of handled connections (no one was closed just it was accepted)." ) ,
+      Item.new( :name => :handled_requests     , :re_index => 4 , :label => "Requests/sec"             , :type => "DERIVE" , :min => 0   , :info => "Number of handled requests." ) ,
+      Item.new( :name => :reading              , :re_index => 5 , :label => "Reading connections"      , :type => "GAUGE"             , :info => "nginx reads request header" ) ,
+      Item.new( :name => :writing              , :re_index => 6 , :label => "Writing connections"      , :type => "GAUGE"             , :info => "nginx reads request body, processes request, or writes response to a client" ) ,
+      Item.new( :name => :waiting              , :re_index => 7 , :label => "Keep-Alive connections"   , :type => "GAUGE"             , :info => "keep-alive connections, actually it is active - (reading + writing)") ###
     ]
 
     PARSE_RE = %r{Active connections: (\d+) .*? (\d+) (\d+) (\d+) .*?Reading: (\d+) Writing: (\d+) Waiting: (\d+)}i
@@ -136,12 +136,12 @@ class MuninNginxStatus
       @graph_data.config_graph.each { |x|
         puts x.join(" ")
       }
-      puts_list(type: :label)
-      puts_list(type: :info )
-      puts_list(type: :type )
-      puts_list(type: :min  )
+      puts_list(:type => label)
+      puts_list(:type => info )
+      puts_list(:type => type )
+      puts_list(:type => min  )
     else
-      puts_list(type: :value, status: status)
+      puts_list(:type => :value, :status => status)
     end
   end
 
@@ -165,5 +165,5 @@ class MuninNginxStatus
 end
 
 if __FILE__ == $0
-  MuninNginxStatus.new(arg: ARGV[0], env: ENV, filename: $0).exec
+  MuninNginxStatus.new(:arg => ARGV[0], :env => ENV, :filename => $0).exec
 end

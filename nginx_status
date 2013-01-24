@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby1.8
 require 'open-uri'
 require 'ostruct'
-
+#$VERBOSE = nil
 class MuninNginxStatus
     class Graph < OpenStruct
   end
@@ -74,13 +74,13 @@ class MuninNginxStatus
     end
 
     ITEM_LIST_ALL = [
-      Item.new( :name => :active_connections   , :re_index => 1 , :label => "Active connections"       , :type => "GAUGE"             , :info => "Number of all open connections." ) ,
-      Item.new( :name => :accepted_connections , :re_index => 2 , :label => "Accepted connections/sec" , :type => "DERIVE" , :min => 0   , :info => "Number of accepted connections." ) ,
-      Item.new( :name => :handled_connections  , :re_index => 3 , :label => "Handled connections/sec"  , :type => "DERIVE" , :min => 0   , :info => "Number of handled connections (no one was closed just it was accepted)." ) ,
-      Item.new( :name => :handled_requests     , :re_index => 4 , :label => "Requests/sec"             , :type => "DERIVE" , :min => 0   , :info => "Number of handled requests." ) ,
-      Item.new( :name => :reading              , :re_index => 5 , :label => "Reading connections"      , :type => "GAUGE"             , :info => "nginx reads request header" ) ,
-      Item.new( :name => :writing              , :re_index => 6 , :label => "Writing connections"      , :type => "GAUGE"             , :info => "nginx reads request body, processes request, or writes response to a client" ) ,
-      Item.new( :name => :waiting              , :re_index => 7 , :label => "Keep-Alive connections"   , :type => "GAUGE"             , :info => "keep-alive connections, actually it is active - (reading + writing)") ###
+      Item.new( :name => :active_connections   , :re_index => 1 , :label => "Active connections"       , :ctype => "GAUGE"             , :info => "Number of all open connections." ) ,
+      Item.new( :name => :accepted_connections , :re_index => 2 , :label => "Accepted connections/sec" , :ctype => "DERIVE" , :min => 0   , :info => "Number of accepted connections." ) ,
+      Item.new( :name => :handled_connections  , :re_index => 3 , :label => "Handled connections/sec"  , :ctype => "DERIVE" , :min => 0   , :info => "Number of handled connections (no one was closed just it was accepted)." ) ,
+      Item.new( :name => :handled_requests     , :re_index => 4 , :label => "Requests/sec"             , :ctype => "DERIVE" , :min => 0   , :info => "Number of handled requests." ) ,
+      Item.new( :name => :reading              , :re_index => 5 , :label => "Reading connections"      , :ctype => "GAUGE"             , :info => "nginx reads request header" ) ,
+      Item.new( :name => :writing              , :re_index => 6 , :label => "Writing connections"      , :ctype => "GAUGE"             , :info => "nginx reads request body, processes request, or writes response to a client" ) ,
+      Item.new( :name => :waiting              , :re_index => 7 , :label => "Keep-Alive connections"   , :ctype => "GAUGE"             , :info => "keep-alive connections, actually it is active - (reading + writing)") ###
     ]
 
     PARSE_RE = %r{Active connections: (\d+) .*? (\d+) (\d+) (\d+) .*?Reading: (\d+) Writing: (\d+) Waiting: (\d+)}i
@@ -136,10 +136,10 @@ class MuninNginxStatus
       @graph_data.config_graph.each { |x|
         puts x.join(" ")
       }
-      puts_list(:type => label)
-      puts_list(:type => info )
-      puts_list(:type => type )
-      puts_list(:type => min  )
+      puts_list(:type => :label)
+      puts_list(:type => :info )
+      puts_list(:type => :ctype )
+      puts_list(:type => :min  )
     else
       puts_list(:type => :value, :status => status)
     end
@@ -153,8 +153,8 @@ class MuninNginxStatus
         puts [item.name, ".label", " ", item.label].join
       when :info
         puts [item.name, ".info" , " ", item.info ].join
-      when :type
-        puts [item.name, ".type" , " ", item.type ].join
+      when :ctype
+        puts [item.name, ".type" , " ", item.ctype ].join
       when :min
         puts [item.name, ".min"  , " ", item.min  ].join if item.min
       when :value
